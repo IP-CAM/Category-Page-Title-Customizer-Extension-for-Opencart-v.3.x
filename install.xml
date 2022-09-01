@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+	<name>Category Page Title Customizer</name>
+	<code>opencart-category-page-title-customizer</code>
+	<version>1.0</version>
+	<author>Dmytro Sokolenko</author>
+	<link>https://github.com/SDG1212</link>
+	<file path="admin/language/en-gb/catalog/category.php">
+		<operation>
+			<search trim="true"><![CDATA[
+				$_['entry_name']             = 'Category Name';
+			]]></search>
+			<add position="after" trim="true"><![CDATA[
+				$_['entry_title']            = 'Category Title';
+			]]></add>
+		</operation>
+	</file>
+	<file path="admin/model/catalog/category.php">
+		<operation>
+			<search trim="true"><![CDATA[
+				$this->db->query("INSERT INTO " . DB_PREFIX . "category_description SET category_id = '" . (int)$category_id . "', language_id = '" . (int)$language_id . "', name = '" . $this->db->escape($value['name']) . "', description = '" . $this->db->escape($value['description']) . "', meta_title = '" . $this->db->escape($value['meta_title']) . "', meta_description = '" . $this->db->escape($value['meta_description']) . "', meta_keyword = '" . $this->db->escape($value['meta_keyword']) . "'");
+			]]></search>
+			<add position="replace"><![CDATA[
+				$is_title_column_exist = $this->db->query("SHOW COLUMNS FROM `" . DB_PREFIX . "category_description` LIKE 'title'");
+
+				if (!$is_title_column_exist->num_rows) {
+					$this->db->query("ALTER TABLE `" . DB_PREFIX . "category_description` ADD COLUMN `title` VARCHAR(255) NOT NULL COLLATE utf8_general_ci AFTER `name`");
+				}
+
+				$this->db->query("INSERT INTO " . DB_PREFIX . "category_description SET category_id = '" . (int)$category_id . "', language_id = '" . (int)$language_id . "', name = '" . $this->db->escape($value['name']) . "', title = '" . $this->db->escape($value['title']) . "', description = '" . $this->db->escape($value['description']) . "', meta_title = '" . $this->db->escape($value['meta_title']) . "', meta_description = '" . $this->db->escape($value['meta_description']) . "', meta_keyword = '" . $this->db->escape($value['meta_keyword']) . "'");
+			]]></add>
+		</operation>
+		<operation>
+			<search trim="true"><![CDATA[
+				'name'             => $result['name'],
+			]]></search>
+			<add position="after"><![CDATA[
+				'title'            => !empty($result['title']) ? $result['title'] : '',
+			]]></add>
+		</operation>
+	</file>
+	<file path="admin/view/template/catalog/category_form.twig">
+		<operation>
+			<search index="0" trim="true"><![CDATA[
+				<div class="form-group">
+			]]></search>
+			<add position="before"><![CDATA[
+                  <div class="form-group">
+                    <label class="col-sm-2 control-label" for="input-title{{ language.language_id }}">{{ entry_title }}</label>
+                    <div class="col-sm-10">
+                      <input type="text" name="category_description[{{ language.language_id }}][title]" value="{{ category_description[language.language_id] ? category_description[language.language_id].title }}" placeholder="{{ entry_title }}" id="input-title{{ language.language_id }}" class="form-control" />
+                    </div>
+                  </div>
+			]]></add>
+		</operation>
+	</file>
+	<file path="catalog/controller/product/category.php">
+		<operation>
+			<search trim="true"><![CDATA[
+				$data['heading_title'] = $category_info['name'];
+			]]></search>
+			<add position="replace" trim="true"><![CDATA[
+				$data['heading_title'] = !empty($category_info['title']) ? $category_info['title'] : $category_info['name'];
+			]]></add>
+		</operation>
+	</file>
+</modification>
